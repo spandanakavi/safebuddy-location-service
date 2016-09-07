@@ -1,0 +1,92 @@
+$def with (rows=None, rundate=None)
+<html>
+  <head>
+    <style>
+      body {
+        font-family: arial, helvetica, sans-serif;
+        color: #606060;
+      }
+      ul>li {
+        list-style: none;
+        padding-bottom: 5px;
+      }
+      hr {
+        height: 0;
+        border: 1px solid #c0c0c0;
+      }
+      .vehicle-list {
+        border-bottom: 1px solid #c0c0c0;
+        margin-bottom: 10px;
+      }
+      .vehicle-list .vehicle {
+        display:inline-block;
+        width:200px
+      }
+      .start-vehicle {
+        display: inline-block;
+        width: 120px;
+      }
+      .vehicle-success-status {
+        color: #009900;
+      }
+      .vehicle-error-status {
+        color: #ff0000;
+      }
+      .vehicle-running-status {
+        display: none;
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script>
+      $$(document).ready(function() {
+        vehicles = {};
+        $$('.start-vehicle').click(function() {
+          startLink = $$(this);
+          startLink.next(".vehicle-running-status").show();
+          vehId = startLink.prev(".vehicle").text();
+          vehicles[vehId] = {};
+          vehicles[vehId].runningStatus = startLink.parent().find(".vehicle-running-status");
+          vehicles[vehId].successStatus = startLink.parent().find(".vehicle-success-status");
+          vehicles[vehId].errorStatus = startLink.parent().find(".vehicle-error-status");
+          vehicles[vehId].successStatus.html('');
+
+          $$.ajax({
+            url: '/livedata/startvehicle?name='+vehId+'&rundate='+$$("#rundate").val(),
+            success: function(data) {
+              output = $$.parseJSON(data);
+              vehicles[output.id].runningStatus.hide();
+              vehicles[output.id].successStatus.html(output.msg);
+            },
+            error: function(data) {
+              vehicles[output.id].runningStatus.hide();
+              vehicles[output.id].errorStatus.html(output.msg);
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="vehicle-run-select">
+      <form method="post" action="/livedata">
+        <label>Select date of vehicle run</label>
+        <input type=date id="rundate" name="rundate" value="$rundate"/>
+        <input type=submit id="get-vehicles" name="get_vehicles" value="Get Vehicles"/>
+      </form>
+    </div>
+    <h2>Available Vehicles</h2>
+    <div id="vehicle-list" class="vehicle-list">
+      <ul>
+        $if rows:
+          $for r in rows:
+            <li>
+              <span class="vehicle">$r.VehicleName</span>
+              <a href="#" class="start-vehicle">Start Vehicle</a>
+              <span class="vehicle-running-status">Running...</span>
+              <span class="vehicle-success-status"></span>
+              <span class="vehicle-error-status"></span>
+            </li>
+      </ul>
+    </div>
+  </body>
+</html>

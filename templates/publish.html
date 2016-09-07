@@ -1,0 +1,102 @@
+$def with (form, files)
+<html>
+  <head>
+    <style>
+      body {
+        font-family: arial, helvetica, sans-serif;
+        color: #606060;
+      }
+      ul>li {
+        list-style: none;
+        padding-bottom: 5px;
+      }
+      hr {
+        height: 0;
+        border: 1px solid #c0c0c0;
+      }
+      .vehicle-list {
+        border-bottom: 1px solid #c0c0c0;
+        margin-bottom: 10px;
+      }
+      .vehicle-list .vehicle {
+        display:inline-block;width:100px
+      }
+      .start-vehicle {
+        display: inline-block;
+        width: 120px;
+      }
+      .vehicle-success-status {
+        color: #009900;
+      }
+      .vehicle-error-status {
+        color: #ff0000;
+      }
+      .vehicle-running-status {
+        display: none;
+      }
+    </style>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script>
+      $$(document).ready(function() {
+        vehicles = {};
+        $$('.start-vehicle').click(function() {
+          startLink = $$(this);
+          startLink.next(".vehicle-running-status").show();
+          vehId = startLink.prev(".vehicle").text();
+          vehicles[vehId] = {};
+          vehicles[vehId].runningStatus = startLink.parent().find(".vehicle-running-status");
+          vehicles[vehId].successStatus = startLink.parent().find(".vehicle-success-status");
+          vehicles[vehId].errorStatus = startLink.parent().find(".vehicle-error-status");
+          vehicles[vehId].successStatus.html('');
+
+          $$.ajax({
+            url: '/startvehicle/'+vehId,
+            success: function(data) {
+              output = $$.parseJSON(data);
+              vehicles[output.id].runningStatus.hide();
+              vehicles[output.id].successStatus.html(output.msg);
+            },
+            error: function(data) {
+              vehicles[output.id].runningStatus.hide();
+              vehicles[output.id].errorStatus.html(output.msg);
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+<form name="main" method="post" enctype="multipart/form-data" action="/upload"> 
+  $if not form.valid: <p class="error">Try again!</p>
+  <h1>Vehicle Location Management</h1>
+  <hr>
+  <h2>Available Vehicles</h2>
+  <div class="vehicle-list">
+    <ul>
+      $for f in files:
+      <li>
+        <span class="vehicle">$f</span>
+        <a href="#" class="start-vehicle">Start Vehicle</a>
+        <span class="vehicle-running-status">Running...</span>
+        <span class="vehicle-success-status"></span>
+        <span class="vehicle-error-status"></span>
+      </li>
+    </ul>
+  </div>
+  <div>
+    <h2>Upload New Vehicle</h2>
+    <p>You can upload a vehicle file with locations (latitude, longitude). Sample below:</p>
+    <pre>
+    38.886757,-77.03064    <- Location where vehicle starts
+    38.888895,-77.225647
+    39.010648,-77.148743
+    39.025585,-76.953735
+    39.142842,-76.854858
+    39.185433,-76.78894
+    39.245017,-76.70105
+    39.262031,-76.574707   <- Location where vehicle stops
+    </pre>
+    <input type="file" name="location_info" id="location-info"/><br/>
+    <input type=submit value="Upload" />
+  </div>
+</form>
+</html>
